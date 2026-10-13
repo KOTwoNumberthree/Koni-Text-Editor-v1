@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- maximum-scale=1 は iOS のフォーカス時自動ズーム防止（文字サイズはツールバーで変更可） -->
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>コードエディタ</title>
+<!--
+ 前提: 外部依存なし・状態はメモリのみ。ハイライトは「透明textarea + 下層pre」方式。
+ 言語の追加方法: スクリプト内の defLang('id', {name, ext:[拡張子], comment:'//' または ['<!--','-->'],
+   indent:/改行後に字下げする行末の正規表現/, rules:[{t:種別, re:'正規表現(キャプチャ括弧なし)'} | {t:種別, w:'単語 単語'}]}) を1つ書くだけ。
+   種別: k=キーワード s=文字列 n=数値 c=コメント t=タグ a=属性 v=変数 p=組込 h=見出し。先に書いたルールが優先。
+-->
+<style>
+:root{--bg:#fbfcfd;--ink:#1c2631;--mut:#66727f;--bar:#eaeef3;--line:#cfd6df;--acc:#2457c5;--accbg:rgba(36,87,197,.14);--cur:rgba(36,87,197,.07);--sel:rgba(36,87,197,.28);--bm:rgba(36,87,197,.3);--fm:#ffe08a;
+--k:#7a3db8;--s:#1a7a4b;--n:#b3541e;--c:#75828f;--t:#1f63c4;--a:#946000;--v:#0f7f8c;--h:#1f63c4;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Noto Sans Mono CJK JP","BIZ UDGothic","MS Gothic",monospace;
+--fs:16px;--tab:4;--sbw:0px;--vh:100dvh}
+[data-theme=dark]{--bg:#111b25;--ink:#d9e0e8;--mut:#8b99a8;--bar:#18242f;--line:#2b3a48;--acc:#6aa3ff;--accbg:rgba(106,163,255,.18);--cur:rgba(106,163,255,.08);--sel:rgba(106,163,255,.32);--bm:rgba(106,163,255,.35);--fm:#6b5a12;
+--k:#c39bff;--s:#7fd6a4;--n:#f0a36b;--c:#7f8d9b;--t:#79b2ff;--a:#e5c07b;--v:#56d3e0;--h:#79b2ff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;font:14px/1.4 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif}
+body{height:var(--vh);display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,select,input{font:inherit;color:inherit}
+#tb{display:flex;gap:4px;padding:4px;background:var(--bar);border-bottom:1px solid var(--line);overflow-x:auto;flex:none;-webkit-overflow-scrolling:touch}
+#tb>*,#fb button{min-height:44px;min-width:44px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);white-space:nowrap;cursor:pointer;flex:none}
+button:hover{border-color:var(--acc)}
+button[aria-pressed=true]{background:var(--accbg);border-color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+#fb{display:none;flex-wrap:wrap;gap:4px;padding:4px;background:var(--bar);border-bottom:1px solid var(--line)}
+#fb.on{display:flex}
+#fb input[type=text]{flex:1 1 130px;min-width:0;min-height:44px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+#fb label{display:flex;align-items:center;gap:4px;min-height:44px;white-space:nowrap}
+#fb input[type=checkbox]{width:20px;height:20px}
+#fc2{display:flex;align-items:center;min-width:4em;color:var(--mut)}
+#ed{flex:1;display:flex;min-height:0;font-family:var(--mono);font-size:var(--fs);line-height:1.6;font-variant-ligatures:none}
+#gut{flex:none;overflow:hidden;text-align:right;white-space:pre;padding:8px 8px calc(var(--fs)*4.8) 8px;color:var(--mut);background:var(--bar);border-right:1px solid var(--line);user-select:none;-webkit-user-select:none}
+#gut div{white-space:pre}
+#stack{flex:1;position:relative;min-width:0;overflow:hidden}
+#hl{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#in,#ta{padding:8px 12px calc(var(--fs)*4.8) 12px}
+#in{position:relative;width:max-content;min-width:calc(100% - var(--sbw))}
+.wrap #in{width:calc(100% - var(--sbw))}
+#pre{margin:0;font:inherit;white-space:pre;tab-size:var(--tab);-moz-tab-size:var(--tab)}
+.wrap #pre,.wrap #ta{white-space:pre-wrap;overflow-wrap:break-word}
+#pre i{display:inline-block;width:0;height:calc(var(--fs)*1.6);vertical-align:top}
+#cur{position:absolute;left:0;right:0;background:var(--cur)}
+#ta{position:absolute;inset:0;width:100%;height:100%;margin:0;border:0;border-radius:0;outline:0;resize:none;overflow:auto;font:inherit;white-space:pre;tab-size:var(--tab);-moz-tab-size:var(--tab);background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--ink)}
+#ta::selection{background:var(--sel);-webkit-text-fill-color:transparent}
+#ta::placeholder{-webkit-text-fill-color:var(--mut);color:var(--mut)}
+.k{color:var(--k)}.s{color:var(--s)}.n{color:var(--n)}.c{color:var(--c);font-style:italic}.t{color:var(--t)}.a{color:var(--a)}.v{color:var(--v)}.p{color:var(--n)}.h{color:var(--h);font-weight:700}
+.bm{background:var(--bm);outline:1px solid var(--acc)}.fm{background:var(--fm)}
+#sb{display:flex;flex-wrap:wrap;gap:2px 14px;padding:4px 10px;background:var(--bar);border-top:1px solid var(--line);font-size:12px;color:var(--mut);flex:none}
+#fn{color:var(--ink);font-weight:600}
+#toast{position:fixed;left:50%;bottom:calc(60px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.on{opacity:1}
+@media (hover:none){.kbd{display:none}}
+</style>
+</head>
+<body>
+<div id="tb" role="toolbar" aria-label="ツールバー">
+ <button id="bNew" aria-label="新規作成">新規</button>
+ <button id="bOpen" aria-label="ファイルを開く">開く</button>
+ <button id="bSave" aria-label="上書き保存">保存</button>
+ <button id="bSaveAs" aria-label="名前を付けて保存">別名保存</button>
+ <button id="bUndo" aria-label="元に戻す">元に戻す</button>
+ <button id="bRedo" aria-label="やり直し">やり直し</button>
+ <button id="bInd" aria-label="インデントを増やす">字下げ</button>
+ <button id="bOut" aria-label="インデントを減らす">字上げ</button>
+ <button id="bCom" aria-label="行コメントの切り替え">コメント</button>
+ <button id="bFind" aria-label="検索と置換">検索</button>
+ <button id="bWrap" aria-label="折り返しの切り替え" aria-pressed="false">折り返し</button>
+ <button id="bFm" aria-label="文字を小さく">A−</button>
+ <button id="bFp" aria-label="文字を大きく">A＋</button>
+ <button id="bTheme" aria-label="テーマの切り替え">テーマ:自動</button>
+ <button id="bEol" aria-label="改行コードの切り替え">改行:LF</button>
+ <select id="sInd" aria-label="インデント幅"><option value="2">スペース2</option><option value="4" selected>スペース4</option><option value="tab">タブ</option></select>
+ <select id="sLang" aria-label="言語（ハイライト）"></select>
+</div>
+<div id="fb" role="search">
+ <input type="text" id="fq" aria-label="検索語" placeholder="検索" autocomplete="off" autocapitalize="off" spellcheck="false">
+ <input type="text" id="fr" aria-label="置換後の文字列" placeholder="置換" autocomplete="off" autocapitalize="off" spellcheck="false">
+ <label><input type="checkbox" id="fc">大小区別</label>
+ <span id="fc2" aria-live="polite"></span>
+ <button id="fPrev" aria-label="前を検索">前へ</button>
+ <button id="fNext" aria-label="次を検索">次へ</button>
+ <button id="fRep" aria-label="置換">置換</button>
+ <button id="fAll" aria-label="すべて置換">すべて置換</button>
+ <button id="fClose" aria-label="検索を閉じる">閉じる</button>
+</div>
+<div id="ed">
+ <div id="gut" aria-hidden="true"></div>
+ <div id="stack">
+  <div id="hl" aria-hidden="true"><div id="in"><div id="cur"></div><pre id="pre"></pre></div></div>
+  <textarea id="ta" aria-label="コードエディタ" aria-multiline="true" placeholder="ここに入力、または「開く」でファイルを選択" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off"></textarea>
+ </div>
+</div>
+<div id="sb"><span id="fn"></span><span id="pos"></span><span id="cnt"></span><span id="lg"></span><span>UTF-8</span><span class="kbd">Escの後にTabで次の要素へ移動</span></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fi" hidden>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),ta=$('ta'),pre=$('pre'),hl=$('hl'),gut=$('gut'),cur=$('cur'),ed=$('ed'),root=document.documentElement;
+
+/* ===== 言語レジストリ ===== */
+const LANGS={};
+const defLang=(id,o)=>{LANGS[id]=Object.assign({id,name:id,ext:[],rules:[],comment:'',indent:/[{(\[]\s*$/},o)};
+const X={dq:/"(?:\\.|[^"\\\n])*"?/.source,sq:/'(?:\\.|[^'\\\n])*'?/.source,bt:/`(?:\\[\s\S]|[^`\\])*`?/.source,
+ lc:/\/\/.*/.source,bc:/\/\*[\s\S]*?(?:\*\/|(?![\s\S]))/.source,hash:/#.*/.source,
+ num:/\b(?:0[xX][\da-fA-F_]+|\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/.source};
+defLang('plain',{name:'プレーンテキスト',ext:['txt','log','text'],indent:/(?!)/});
+defLang('javascript',{name:'JavaScript / TypeScript',ext:['js','mjs','cjs','jsx','ts','tsx'],comment:'//',rules:[
+ {t:'c',re:X.lc+'|'+X.bc},{t:'s',re:X.dq+'|'+X.sq+'|'+X.bt},{t:'n',re:X.num},
+ {t:'k',w:'async await break case catch class const continue debugger default delete do else export extends finally for from function if import in instanceof let new of return static switch throw try typeof var void while with yield get set interface type enum implements public private protected readonly as'},
+ {t:'p',w:'true false null undefined NaN Infinity this super'}]});
+const q3=/"""[\s\S]*?(?:"""|(?![\s\S]))|'''[\s\S]*?(?:'''|(?![\s\S]))/.source;
+defLang('python',{name:'Python',ext:['py','pyw'],comment:'#',indent:/:\s*$/,rules:[
+ {t:'c',re:X.hash},{t:'s',re:'(?:\\b[rRbBfFuU]{1,2}(?=["\']))?(?:'+q3+'|'+X.dq+'|'+X.sq+')'},{t:'n',re:X.num},
+ {t:'p',re:/@[\w.]+/.source},
+ {t:'k',w:'and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case'},
+ {t:'p',w:'True False None self cls print len range int str float list dict set tuple open super isinstance'}]});
+defLang('html',{name:'HTML / XML',ext:['html','htm','xml','svg','vue'],comment:['<!--','-->'],indent:/<(?!\/|!|br|hr|img|input|meta|link)[a-zA-Z][^>]*[^\/>]>\s*$/,rules:[
+ {t:'c',re:/<!--[\s\S]*?(?:-->|(?![\s\S]))/.source},{t:'p',re:/<![A-Za-z][^>]*>?/.source},
+ {t:'s',re:/=\s*(?:"[^"]*"|'[^']*')/.source},{t:'t',re:/<\/?[A-Za-z][\w:-]*|\/?>/.source},
+ {t:'a',re:/[\w:@.-]+(?=\s*=)/.source},{t:'v',re:/&#?\w+;/.source}]});
+defLang('css',{name:'CSS',ext:['css','scss','less'],comment:['/*','*/'],rules:[
+ {t:'c',re:X.bc},{t:'s',re:X.dq+'|'+X.sq},{t:'k',re:/@[\w-]+/.source},
+ {t:'n',re:/#[0-9a-fA-F]{3,8}\b|\b\d*\.?\d+(?:px|r?em|vh|vw|ms|s|deg|fr|pt|ch|%)?/.source},
+ {t:'a',re:/-?[a-zA-Z][\w-]*(?=\s*:\s*[^\s{])/.source}]});
+defLang('json',{name:'JSON',ext:['json','jsonc','webmanifest'],rules:[
+ {t:'a',re:/"(?:\\.|[^"\\\n])*"(?=\s*:)/.source},{t:'s',re:X.dq},{t:'n',re:/-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/.source},{t:'p',w:'true false null'}]});
+defLang('markdown',{name:'Markdown',ext:['md','markdown'],comment:['<!--','-->'],indent:/(?!)/,rules:[
+ {t:'s',re:/```[\s\S]*?(?:```|(?![\s\S]))|~~~[\s\S]*?(?:~~~|(?![\s\S]))/.source},{t:'s',re:/`[^`\n]+`/.source},
+ {t:'h',re:/^#{1,6}[ \t].*/.source},{t:'c',re:/^>.*/.source},{t:'k',re:/^[ \t]*(?:[-*+]|\d+\.)[ \t]/.source},
+ {t:'v',re:/\*\*[^*\n]+\*\*|__[^_\n]+__/.source},{t:'t',re:/!?\[[^\]\n]*\]\([^)\n]*\)/.source}]});
+const cl=(id,name,ext,kw,pp)=>defLang(id,{name,ext,comment:'//',rules:[{t:'c',re:X.lc+'|'+X.bc},...(pp?[{t:'p',re:/^[ \t]*#[ \t]*\w+/.source}]:[]),
+ {t:'s',re:X.dq+'|'+X.sq},{t:'n',re:X.num},{t:'k',w:kw},{t:'p',w:'true false null NULL nullptr this'}]});
+cl('c','C / C++',['c','h','cpp','cc','cxx','hpp'],'auto break case char const continue default do double else enum extern float for goto if inline int long register return short signed sizeof static struct switch typedef union unsigned void volatile while class namespace template typename public private protected virtual new delete using bool try catch throw',1);
+cl('java','Java',['java'],'abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for if implements import instanceof int interface long native new package private protected public return short static super switch synchronized throw throws try void volatile while var record');
+cl('csharp','C#',['cs'],'abstract as base bool break byte case catch char class const continue decimal default do double else enum event finally float for foreach if in int interface internal is lock long namespace new object out override private protected public readonly ref return sealed short static string struct switch throw try typeof using var virtual void while async await');
+defLang('shell',{name:'Shell',ext:['sh','bash','zsh','bashrc','zshrc'],comment:'#',indent:/(?:\bthen|\bdo|\{)\s*$/,rules:[
+ {t:'c',re:/(?:^|\s)#.*/.source},{t:'s',re:X.dq+'|'+X.sq},{t:'v',re:/\$(?:\w+|\{[^}\n]*\}|[@#?$!*])/.source},{t:'n',re:X.num},
+ {t:'k',w:'if then else elif fi for while until do done case esac in function select return exit break continue local export readonly declare unset source alias echo cd set shift trap eval exec test'}]});
+const byExt={};Object.values(LANGS).forEach(L=>L.ext.forEach(e=>byExt[e]=L.id));
+function compile(L){if(L._re!==undefined)return;const p=[];L._t=[];
+ for(const r of L.rules){p.push('('+(r.w?'\\b(?:'+r.w.split(' ').join('|')+')\\b':r.re)+')');L._t.push(r.t)}
+ try{L._re=p.length?new RegExp(p.join('|'),'gm'):null}catch(e){L._re=null}}
+
+/* ===== 状態 ===== */
+const S={name:'無題.txt',handle:null,eol:'LF',bom:false,saved:'',lang:'plain',wrap:false,fs:16,theme:'auto',indent:'4',dirty:false};
+const PT=8;let LH=S.fs*1.6,CW=9,ver=0,stV=-1,starts=[0],R_=[],rk='',timer=0,composing=false,free=false,gutK='';
+const esc=s=>s.replace(/[&<>]/g,c=>c==='&'?'&amp;':c==='<'?'&lt;':'&gt;');
+const F={m:[],cur:null};
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2400)};
+const unit=()=>S.indent==='tab'?'\t':' '.repeat(+S.indent),uw=()=>S.indent==='tab'?4:+S.indent;
+
+function getStarts(){if(stV===ver)return starts;const t=ta.value;starts=[0];let i=-1;while((i=t.indexOf('\n',i+1))>=0)starts.push(i+1);stV=ver;return starts}
+function lineOf(p){const a=getStarts();let lo=0,hi=a.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(a[m]<=p)lo=m;else hi=m-1}return lo}
+const marks=()=>pre.getElementsByTagName('i');
+const lineTop=l=>{if(!S.wrap)return PT+l*LH;const m=marks()[l];return m?m.offsetTop:PT+l*LH};
+
+/* ===== ハイライト描画 ===== */
+function wrapSp(c,s){s=esc(s);return c?'<span class="'+c+'">'+s+'</span>':s}
+function emit(c,s,off){if(!R_.length)return wrapSp(c,s);let h='',p=0;const end=off+s.length;
+ for(const r of R_){if(r[1]<=off||r[0]>=end)continue;let a=Math.max(r[0],off)-off;const b=Math.min(r[1],end)-off;if(a<p)a=p;if(b<=a)continue;
+  if(a>p)h+=wrapSp(c,s.slice(p,a));h+=wrapSp(c+' '+r[2],s.slice(a,b));p=b}
+ return p<s.length?h+wrapSp(c,s.slice(p)):h}
+function highlight(t,L){const re=L._re;if(!re)return emit('',t,0);let h='',last=0,m;re.lastIndex=0;
+ while((m=re.exec(t))){if(!m[0]){re.lastIndex++;continue}let g=1;while(m[g]===undefined)g++;
+  if(m.index>last)h+=emit('',t.slice(last,m.index),last);h+=emit(L._t[g-1],m[0],m.index);last=m.index+m[0].length}
+ return h+(last<t.length?emit('',t.slice(last),last):'')}
+function bracket(p){const t=ta.value,O='([{',C=')]}';
+ for(const q of[p,p-1]){const ch=t[q];if(!ch)continue;let i=O.indexOf(ch),d=0;
+  if(i>=0){for(let j=q,e=Math.min(t.length,q+20000);j<e;j++){const c=t[j];if(c===ch)d++;else if(c===C[i]&&--d===0)return[q,j]}}
+  else if((i=C.indexOf(ch))>=0){for(let j=q,e=Math.max(0,q-20000);j>=e;j--){const c=t[j];if(c===ch)d++;else if(c===O[i]&&--d===0)return[j,q]}}}
+ return null}
+function ranges(){const r=[],s=ta.selectionStart;
+ if(s===ta.selectionEnd&&ta.value.length<200000){const m=bracket(s);if(m)r.push([m[0],m[0]+1,'bm'],[m[1],m[1]+1,'bm'])}
+ if(F.cur)r.push([F.cur[0],F.cur[1],'fm']);r.sort((a,b)=>a[0]-b[0]);R_=r;rk=JSON.stringify(r)}
+function fitSb(){const w=ta.offsetWidth-ta.clientWidth;root.style.setProperty('--sbw',w+'px')}
+function render(){timer=0;const t=ta.value,L=LANGS[S.lang];compile(L);ranges();
+ let h=(t.length>400000?emit('',t,0):highlight(t,L))+'\n ';
+ if(S.wrap)h='<i></i>'+h.replace(/\n/g,'\n<i></i>');
+ pre.innerHTML=h;fitSb();gutter();placeCur();status();sync();
+ if($('fb').classList.contains('on')){findAll();fcount()}}
+function schedule(){if(ta.value.length<60000)render();else{clearTimeout(timer);timer=setTimeout(render,120)}}
+function gutter(){const n=getStarts().length,w=Math.max(2,String(n).length);gut.style.width='calc('+w+'ch + 20px)';
+ if(!S.wrap){const k=n+'|'+S.fs;if(k===gutK)return;gutK=k;const a=new Array(n);for(let i=0;i<n;i++)a[i]=i+1;gut.textContent=a.join('\n');return}
+ gutK='';const ms=marks();let h='';for(let i=0;i<n;i++){const hh=(ms[i+1]?ms[i+1].offsetTop:ms[i].offsetTop+LH)-ms[i].offsetTop;h+='<div style="height:'+hh+'px">'+(i+1)+'</div>'}
+ gut.innerHTML=h}
+function placeCur(){const l=lineOf(ta.selectionEnd),t=lineTop(l);cur.style.top=t+'px';cur.style.height=(S.wrap?lineTop(l+1)-t:LH)+'px'}
+function sync(){hl.scrollTop=ta.scrollTop;hl.scrollLeft=ta.scrollLeft;gut.scrollTop=ta.scrollTop}
+function status(){const s=ta.selectionStart,e=ta.selectionEnd,l=lineOf(e);
+ $('pos').textContent='行 '+(l+1)+'、列 '+(e-getStarts()[l]+1)+(s!==e?'（選択 '+(e-s)+'）':'');
+ $('cnt').textContent=getStarts().length+' 行 / '+ta.value.length+' 文字';$('lg').textContent=LANGS[S.lang].name}
+function sel(){const o=rk;ranges();if(rk!==o)render();else{placeCur();status()}}
+function scrollToPos(p){const l=lineOf(p),t=lineTop(l),h=S.wrap?lineTop(l+1)-t:LH,vh=ta.clientHeight,m=Math.min(LH*2,vh/4);
+ if(t<ta.scrollTop+m)ta.scrollTop=Math.max(0,t-m);else if(t+h>ta.scrollTop+vh-m)ta.scrollTop=t+h-vh+m;
+ if(!S.wrap){const x=12+(p-getStarts()[l])*CW;if(x<ta.scrollLeft+12)ta.scrollLeft=Math.max(0,x-40);else if(x>ta.scrollLeft+ta.clientWidth-30)ta.scrollLeft=x-ta.clientWidth+60}
+ sync()}
+const scrollCaret=()=>scrollToPos(ta.selectionEnd);
+function measure(){const c=document.createElement('canvas').getContext('2d');c.font=S.fs+'px '+getComputedStyle(ta).fontFamily;CW=c.measureText('M').width||S.fs*.6}
+
+/* ===== Undo / Redo（独自履歴） ===== */
+const H={a:[],i:-1,t:0};
+const snap=()=>({v:ta.value,s:ta.selectionStart,e:ta.selectionEnd});
+function record(force){if(composing)return;const s=snap(),top=H.a[H.i],now=Date.now();
+ if(top&&top.v===s.v){top.s=s.s;top.e=s.e;return}
+ H.a.length=H.i+1;if(!force&&H.i>0&&now-H.t<800)H.a[H.i]=s;else{H.a.push(s);H.i++}
+ H.t=now;const max=s.v.length>200000?20:300;if(H.a.length>max){H.a.shift();H.i--}}
+function restore(x){const st=ta.scrollTop;ta.value=x.v;ta.setSelectionRange(x.s,x.e);ta.scrollTop=st;H.t=0;ver++;check();render();scrollCaret()}
+function undo(){if(H.i>0){record(false);if(H.i>0){H.i--;restore(H.a[H.i])}}}
+function redo(){if(H.i<H.a.length-1){H.i++;restore(H.a[H.i])}}
+function check(){const d=ta.value!==S.saved;S.dirty=d;$('fn').textContent=(d?'● ':'')+S.name;document.title=(d?'● ':'')+S.name+' - コードエディタ'}
+function afterEdit(force){ver++;check();record(force);schedule()}
+
+/* ===== 編集操作 ===== */
+function lineSpan(){const t=ta.value,s=ta.selectionStart;let e=ta.selectionEnd;if(e>s&&t[e-1]==='\n')e--;
+ const ls=s?t.lastIndexOf('\n',s-1)+1:0;let le=t.indexOf('\n',e);if(le<0)le=t.length;return[ls,le]}
+function applyLines(fn){const t=ta.value,s=ta.selectionStart,e=ta.selectionEnd,[ls,le]=lineSpan(),block=t.slice(ls,le),lines=block.split('\n'),nl=lines.map(fn),nb=nl.join('\n');
+ const d0=nl[0].length-lines[0].length;ta.setRangeText(nb,ls,le,'preserve');
+ ta.setSelectionRange(s===ls?ls:Math.max(ls,s+d0),Math.max(ls,e+nb.length-block.length));afterEdit(true)}
+function indent(){const t=ta.value,s=ta.selectionStart,e=ta.selectionEnd;
+ if(t.slice(s,e).indexOf('\n')<0){let ins='\t';if(S.indent!=='tab'){const col=s-(s?t.lastIndexOf('\n',s-1)+1:0),w=uw();ins=' '.repeat(w-col%w)}
+  ta.setRangeText(ins,s,e,'end');afterEdit(false)}else applyLines(x=>unit()+x)}
+function outdent(){const w=uw();applyLines(x=>{if(x[0]==='\t')return x.slice(1);let n=0;while(n<w&&x[n]===' ')n++;return x.slice(n)})}
+function newline(){const t=ta.value,s=ta.selectionStart,e=ta.selectionEnd,ls=s?t.lastIndexOf('\n',s-1)+1:0,line=t.slice(ls,s),ind=/^[ \t]*/.exec(line)[0],L=LANGS[S.lang];
+ let ins='\n'+ind,cs=null;
+ if(L.indent.test(line)){ins+=unit();const b=t[s-1],a=t[e];if(a&&b&&'{[('.includes(b)&&'}])'.includes(a)){cs=s+ins.length;ins+='\n'+ind}}
+ ta.setRangeText(ins,s,e,'end');if(cs!==null)ta.setSelectionRange(cs,cs);afterEdit(false);scrollCaret()}
+function toggleComment(){const c=LANGS[S.lang].comment;if(!c)return;const o=Array.isArray(c)?c[0]:c,cc=Array.isArray(c)?c[1]:'';
+ const [ls,le]=lineSpan(),ls_=ta.value.slice(ls,le).split('\n').filter(x=>x.trim());if(!ls_.length)return;
+ const all=ls_.every(x=>x.trimStart().startsWith(o)),mi=Math.min(...ls_.map(x=>/^[ \t]*/.exec(x)[0].length));
+ applyLines(x=>{if(!x.trim())return x;
+  if(all){const i=x.indexOf(o);let r=x.slice(0,i)+x.slice(i+o.length).replace(/^ /,'');if(cc){r=r.trimEnd();if(r.endsWith(cc))r=r.slice(0,-cc.length).trimEnd()}return r}
+  return x.slice(0,mi)+o+' '+x.slice(mi)+(cc?' '+cc:'')})}
+function dup(){const t=ta.value,s=ta.selectionStart,e=ta.selectionEnd,[ls,le]=lineSpan(),b=t.slice(ls,le);
+ ta.setRangeText('\n'+b,le,le,'preserve');ta.setSelectionRange(s+b.length+1,e+b.length+1);afterEdit(true);scrollCaret()}
+function moveLines(d){const t=ta.value,s=ta.selectionStart,e=ta.selectionEnd,[ls,le]=lineSpan(),b=t.slice(ls,le);
+ if(d<0){if(!ls)return;const ps=ls>1?t.lastIndexOf('\n',ls-2)+1:0,p=t.slice(ps,ls-1);ta.setRangeText(b+'\n'+p,ps,le,'preserve');ta.setSelectionRange(s-p.length-1,e-p.length-1)}
+ else{if(le>=t.length)return;let ne=t.indexOf('\n',le+1);if(ne<0)ne=t.length;const n=t.slice(le+1,ne);ta.setRangeText(n+'\n'+b,ls,ne,'preserve');ta.setSelectionRange(s+n.length+1,e+n.length+1)}
+ afterEdit(true);scrollCaret()}
+
+/* ===== 検索・置換 ===== */
+function findAll(){const q=$('fq').value;F.m=[];if(!q)return;let t=ta.value,k=q;if(!$('fc').checked){t=t.toLowerCase();k=k.toLowerCase()}
+ let i,p=0;while((i=t.indexOf(k,p))>=0&&F.m.length<100000){F.m.push(i);p=i+k.length}}
+function fcount(){const q=$('fq').value,n=F.m.length;let i=-1;if(F.cur)i=F.m.indexOf(F.cur[0]);$('fc2').textContent=q?(i>=0?(i+1)+'/'+n:n+'件'):''}
+function go(d){findAll();const n=F.m.length,L=$('fq').value.length;if(!n){F.cur=null;$('fc2').textContent=$('fq').value?'0件':'';render();return}
+ const s=ta.selectionStart,e=ta.selectionEnd;let p;
+ if(d>0){p=F.m.find(x=>x>=e);if(p===undefined)p=F.m[0]}else{p=[...F.m].reverse().find(x=>x<s);if(p===undefined)p=F.m[n-1]}
+ ta.setSelectionRange(p,p+L);F.cur=[p,p+L];render();scrollToPos(p);fcount()}
+function openFind(rep){$('fb').classList.add('on');const s=ta.value.slice(ta.selectionStart,ta.selectionEnd);
+ if(s&&s.length<100&&s.indexOf('\n')<0)$('fq').value=s;const f=$(rep?'fr':'fq');f.focus();f.select();findAll();fcount()}
+function closeFind(){$('fb').classList.remove('on');F.cur=null;render();ta.focus()}
+function replaceOne(){const q=$('fq').value;if(!q)return;const s=ta.selectionStart,e=ta.selectionEnd,x=ta.value.slice(s,e);
+ const same=$('fc').checked?x===q:x.toLowerCase()===q.toLowerCase();
+ if(same){const r=$('fr').value;ta.setRangeText(r,s,e,'end');F.cur=null;afterEdit(true)}go(1)}
+function replaceAll(){findAll();const n=F.m.length,L=$('fq').value.length;if(!n){toast('一致する文字列がありません');return}
+ const t=ta.value,r=$('fr').value;let o='',l=0;for(const i of F.m){o+=t.slice(l,i)+r;l=i+L}o+=t.slice(l);
+ const st=ta.scrollTop;ta.value=o;ta.setSelectionRange(0,0);ta.scrollTop=st;F.cur=null;afterEdit(true);toast(n+'件を置換しました')}
+
+/* ===== ファイル操作 ===== */
+function detectLang(){const m=/\.([^.\/\\]+)$/.exec(S.name),id=m&&byExt[m[1].toLowerCase()];S.lang=id||'plain';$('sLang').value=S.lang}
+function load(name,text,handle,bom){S.name=name;S.handle=handle||null;S.bom=!!bom;
+ const c=(text.match(/\r\n/g)||[]).length,l=(text.match(/\n/g)||[]).length;S.eol=c>0&&c>l-c?'CRLF':'LF';$('bEol').textContent='改行:'+S.eol;
+ text=text.replace(/\r\n?/g,'\n');ta.value=text;S.saved=text;ta.setSelectionRange(0,0);ta.scrollTop=ta.scrollLeft=0;F.cur=null;
+ H.a=[];H.i=-1;ver++;detectLang();check();record(true);render()}
+const okDiscard=()=>!S.dirty||confirm('未保存の変更があります。破棄して続けますか？');
+async function readFile(f,h){const buf=await f.arrayBuffer(),u=new Uint8Array(buf),bom=u[0]===0xEF&&u[1]===0xBB&&u[2]===0xBF;let t;
+ try{t=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(e){t=new TextDecoder('utf-8').decode(buf);toast('UTF-8でない文字は置換して読み込みました')}
+ load(f.name,t,h,bom)}
+async function openFile(){if(!okDiscard())return;
+ if(window.showOpenFilePicker){try{const[h]=await window.showOpenFilePicker();return readFile(await h.getFile(),h)}catch(e){if(e.name==='AbortError')return}}
+ $('fi').click()}
+$('fi').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)readFile(f,null)};
+const payload=t=>(S.bom?'\uFEFF':'')+(S.eol==='CRLF'?t.replace(/\n/g,'\r\n'):t);
+async function write(h){const t=ta.value,w=await h.createWritable();await w.write(new Blob([payload(t)],{type:'text/plain;charset=utf-8'}));await w.close();S.saved=t;check();toast('保存しました')}
+function download(){const t=ta.value,a=document.createElement('a');a.href=URL.createObjectURL(new Blob([payload(t)],{type:'text/plain;charset=utf-8'}));a.download=S.name;
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);S.saved=t;check();toast('ダウンロードしました')}
+async function save(){if(S.handle){try{await write(S.handle)}catch(e){toast('保存に失敗しました: '+e.message)}}else if(window.showSaveFilePicker)return saveAs();else download()}
+async function saveAs(){if(window.showSaveFilePicker){try{const h=await window.showSaveFilePicker({suggestedName:S.name});await write(h);S.handle=h;S.name=h.name;detectLang();check();return}catch(e){if(e.name==='AbortError')return;toast('保存に失敗しました: '+e.message);return}}
+ let n=null;try{n=prompt('ファイル名を入力してください',S.name)}catch(e){n=S.name}if(!n)return;S.name=n;detectLang();download()}
+addEventListener('beforeunload',e=>{if(S.dirty){e.preventDefault();e.returnValue=''}});
+
+/* ===== イベント ===== */
+ta.addEventListener('compositionstart',()=>composing=true);
+ta.addEventListener('compositionend',()=>{composing=false;ver++;check();record(false);schedule()});
+ta.addEventListener('input',()=>{ver++;check();if(!composing)record(false);schedule()});
+ta.addEventListener('beforeinput',e=>{if(e.inputType==='historyUndo'){e.preventDefault();undo()}else if(e.inputType==='historyRedo'){e.preventDefault();redo()}});
+ta.addEventListener('scroll',sync);
+ta.addEventListener('blur',()=>free=false);
+ta.addEventListener('focus',()=>setTimeout(scrollCaret,300));
+ta.addEventListener('keydown',e=>{if(e.isComposing||e.keyCode===229||composing)return;const mod=e.ctrlKey||e.metaKey;
+ if(e.key==='Escape'){free=true;return}
+ if(e.key==='Tab'&&!mod&&!e.altKey&&!free){e.preventDefault();e.shiftKey?outdent():indent()}
+ else if(e.key==='Enter'&&!mod&&!e.altKey){e.preventDefault();newline()}
+ else if(e.altKey&&!mod&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();moveLines(e.key==='ArrowUp'?-1:1)}});
+let selT=0;const selSoon=()=>{if(!selT)selT=requestAnimationFrame(()=>{selT=0;sel()})};
+['keyup','mouseup','touchend','click','select'].forEach(n=>ta.addEventListener(n,selSoon));
+document.addEventListener('selectionchange',()=>{if(document.activeElement===ta)selSoon()});
+document.addEventListener('keydown',e=>{const mod=e.ctrlKey||e.metaKey;if(!mod||e.altKey)return;const k=e.key.toLowerCase();
+ if(k==='s'){e.preventDefault();e.shiftKey?saveAs():save()}else if(k==='o'){e.preventDefault();openFile()}
+ else if(k==='f'){e.preventDefault();openFind(false)}else if(k==='h'){e.preventDefault();openFind(true)}
+ else if(document.activeElement===ta&&!composing){
+  if(k==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if(k==='y'){e.preventDefault();redo()}
+  else if(k==='/'){e.preventDefault();toggleComment()}else if(k==='d'){e.preventDefault();dup()}}});
+const on=(id,f)=>$(id).addEventListener('click',f);
+on('bNew',()=>{if(okDiscard()){load('無題.txt','',null,false)}});on('bOpen',openFile);on('bSave',save);on('bSaveAs',saveAs);
+on('bUndo',()=>{undo();ta.focus()});on('bRedo',()=>{redo();ta.focus()});on('bInd',()=>{ta.focus();indent()});on('bOut',()=>{ta.focus();outdent()});on('bCom',()=>{ta.focus();toggleComment()});
+on('bFind',()=>$('fb').classList.contains('on')?closeFind():openFind(false));
+on('bWrap',()=>{S.wrap=!S.wrap;ed.classList.toggle('wrap',S.wrap);ta.wrap=S.wrap?'soft':'off';$('bWrap').setAttribute('aria-pressed',S.wrap);gutK='';render();scrollCaret()});
+const setFs=d=>{S.fs=Math.max(10,Math.min(32,S.fs+d));root.style.setProperty('--fs',S.fs+'px');LH=S.fs*1.6;measure();gutK='';render()};
+on('bFm',()=>setFs(-1));on('bFp',()=>setFs(1));
+const mq=matchMedia('(prefers-color-scheme: dark)');
+function theme(){root.dataset.theme=S.theme==='auto'?(mq.matches?'dark':'light'):S.theme;$('bTheme').textContent='テーマ:'+{auto:'自動',light:'ライト',dark:'ダーク'}[S.theme]}
+on('bTheme',()=>{S.theme={auto:'light',light:'dark',dark:'auto'}[S.theme];theme()});mq.addEventListener&&mq.addEventListener('change',theme);
+on('bEol',()=>{S.eol=S.eol==='LF'?'CRLF':'LF';$('bEol').textContent='改行:'+S.eol;toast('保存時の改行コード: '+S.eol)});
+$('sInd').onchange=e=>{S.indent=e.target.value;root.style.setProperty('--tab',uw());render()};
+Object.values(LANGS).forEach(L=>{const o=document.createElement('option');o.value=L.id;o.textContent=L.name;$('sLang').appendChild(o)});
+$('sLang').onchange=e=>{S.lang=e.target.value;render()};
+$('fq').addEventListener('input',()=>{F.cur=null;findAll();if(F.m.length)go(1);else{render();fcount()}});
+$('fc').addEventListener('change',()=>{F.cur=null;findAll();fcount();render()});
+$('fb').addEventListener('keydown',e=>{if(e.isComposing||e.keyCode===229)return;
+ if(e.key==='Escape'){closeFind()}else if(e.key==='Enter'&&e.target.tagName==='INPUT'&&e.target.type==='text'){e.preventDefault();e.target.id==='fr'?replaceOne():go(e.shiftKey?-1:1)}});
+on('fNext',()=>go(1));on('fPrev',()=>go(-1));on('fRep',replaceOne);on('fAll',replaceAll);on('fClose',closeFind);
+const vv=window.visualViewport;
+function vvr(){root.style.setProperty('--vh',(vv?vv.height:innerHeight)+'px');scrollTo(0,0);fitSb();sync()}
+if(vv){vv.addEventListener('resize',()=>{vvr();if(document.activeElement===ta)setTimeout(scrollCaret,30)});vv.addEventListener('scroll',()=>scrollTo(0,0))}
+addEventListener('resize',()=>{vvr();render()});
+
+theme();measure();load('無題.txt','',null,false);ta.focus();
+})();
+</script>
+</body>
+</html>
