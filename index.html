@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>コードエディタ</title>
 <!--
- 【言語の追加】defLang('id',{name,ext:[拡張子],comment:'//'|['<!--','-->'],indent:/字下げする行末/,
+ 【言語の追加】defLang('id',{name,ext:[拡張子],comment:'//'|['開始','終了'],indent:/字下げする行末/,
    rules:[{t:種別,re:'正規表現(キャプチャ括弧なし)'}|{t:種別,w:'単語 単語'}|{t:種別,re:'開始',ml:'終了'}(複数行)]}) を1つ書く。
    種別: k=キーワード s=文字列 n=数値 c=コメント f=関数 y=型 v=変数 p=組込 t=タグ a=属性 h=見出し。先に書いたルールが優先。
  【コマンドの追加】C('id','表示名(日本語)','英語の別名','Mod+Alt+Shift+キー'|'',関数,{ed:1(編集中のみ)|g:1(常に)}) を1行足すと
@@ -72,11 +72,54 @@ button,input{font:inherit;color:inherit}
 .pi.on{background:var(--pon)}.pi small{color:var(--gut);white-space:nowrap}
 #toast{position:fixed;left:50%;bottom:calc(60px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--pbg);color:var(--fg);border:1px solid var(--bd);padding:8px 14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:30}
 #toast.on{opacity:1}
+
+[hidden]{display:none!important}
+#app{flex:1;min-height:0;display:flex}#main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+#ab{flex:none;width:48px;display:flex;flex-direction:column;background:var(--ab);border-right:1px solid var(--bd)}
+#ab button{position:relative;width:48px;min-height:48px;border:0;background:none;color:var(--abfg);font-size:20px;cursor:pointer}
+#ab button:hover,#ab button[aria-pressed=true]{color:var(--abon)}
+#ab button[aria-pressed=true]::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;background:var(--abon)}
+#ab .sp{flex:1}
+#sd{display:none;flex:none;width:260px;flex-direction:column;min-height:0;background:var(--sd);border-right:1px solid var(--bd)}
+#sd.sv{display:flex}
+#sdh{display:flex;align-items:center;justify-content:space-between;padding-left:12px;min-height:35px;font-size:11px;text-transform:uppercase}
+#sdx{display:none;min-width:44px;min-height:44px;border:0;background:none;cursor:pointer}
+.sdb{flex:1;overflow:auto;min-height:0}
+.sh{padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase}
+.em{margin:0;padding:8px 12px;color:var(--gut)}
+.ti{display:flex;align-items:center;gap:4px;width:100%;min-height:44px;padding:0 8px;border:0;background:none;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden}
+.ti:hover,.pr:hover{background:var(--hov)}.ti.on{background:var(--pon)}
+.ti i{flex:none;width:14px;font-style:normal;font-size:11px;text-align:center}.ti small{color:var(--gut)}
+.bt{display:block;width:calc(100% - 24px);min-height:44px;margin:6px 12px;border:0;background:var(--acc);color:#fff;cursor:pointer}
+#sq{display:flex;gap:4px;padding:8px}#gq{flex:1;min-width:0;min-height:44px;padding:0 8px;border:1px solid var(--bd);background:var(--inp)}
+#gb,#pnx{min-width:44px;min-height:44px;border:1px solid var(--bd);background:var(--tabi);cursor:pointer}
+#bc{flex:none;display:flex;gap:6px;padding:2px 12px;min-height:22px;font-size:12px;color:var(--tabfg);overflow-x:auto;white-space:nowrap;background:var(--bg)}
+#pn{flex:none;display:flex;flex-direction:column;height:30vh;min-height:110px;max-height:280px;background:var(--bg);border-top:1px solid var(--bd)}
+#pnh{display:flex;align-items:center;gap:8px;padding-left:12px;font-size:11px;text-transform:uppercase}#pnx{margin-left:auto;border:0;background:none}
+#pnl{flex:1;overflow:auto}
+.pr{display:flex;gap:6px;align-items:center;width:100%;min-height:44px;padding:0 12px;border:0;background:none;text-align:left;cursor:pointer}.pr small{color:var(--gut)}
+.er{color:var(--err)}.wr{color:var(--warn)}
+#tb{background:var(--tab);color:var(--abfg);border-bottom:1px solid var(--bd)}#tb button:hover,#tb button[aria-pressed=true]{background:var(--hov)}#tb i{background:var(--bd)}
+#tabs{background:var(--tab)}
+#sb{border-top:1px solid var(--bd);align-items:stretch}#sb .sp{flex:1}#sb button{color:inherit}#sb button:hover{background:var(--hov)}#sb button:empty{display:none}
+#scrim{position:fixed;inset:0;z-index:14;background:#0006}
+@media (pointer:fine){#tb button{min-height:30px;min-width:30px}.tw button{min-height:35px}#sb button{min-height:22px}.ti,.pr{min-height:24px}}
+@media (min-width:1024px) and (hover:hover){#tb{display:none}body.tbs #tb{display:flex}}
+@media not all and (min-width:1024px) and (hover:hover){#sd{position:fixed;z-index:15;left:0;top:0;bottom:0;display:flex;width:min(320px,86vw);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);transform:translateX(-102%);visibility:hidden;transition:transform .2s,visibility .2s;box-shadow:0 0 18px #0008}#sd.sv{transform:none;visibility:visible}#sdx{display:block}}
+@media (max-width:767px){#app{flex-direction:column-reverse}#ab{flex-direction:row;width:auto;border-right:0;border-top:1px solid var(--bd)}#ab button{flex:1;width:auto;min-height:44px}#ab button[aria-pressed=true]::before{left:12px;right:12px;top:0;bottom:auto;width:auto;height:2px}#ab .sp{display:none}.lo{display:none!important}}
+@media (prefers-reduced-motion:reduce){#sd{transition:none}}
 </style>
 </head>
 <body>
+<div id="app">
+<nav id="ab" role="toolbar" aria-orientation="vertical" aria-label="アクティビティバー"><button id="a1" data-v="x" aria-label="エクスプローラー" title="エクスプローラー（Ctrl/Cmd+Shift+E）" aria-pressed="false">📁</button><button id="a2" data-v="s" aria-label="検索" title="フォルダー内を検索（Ctrl/Cmd+Shift+F）" aria-pressed="false">🔍</button><button id="a3" data-c="problems" aria-label="問題パネル" title="問題（Ctrl/Cmd+Shift+M）" aria-pressed="false">⚠</button><i class="sp"></i><button id="a4" data-c="settings" aria-label="設定" title="設定（Ctrl/Cmd+,）">⚙</button></nav>
+<aside id="sd" aria-label="サイドバー"><div id="sdh"><b id="sdt">エクスプローラー</b><button id="sdx" aria-label="サイドバーを閉じる">✕</button></div>
+ <div id="vx" class="sdb"><div class="sh">開いているエディター</div><div id="oe" role="listbox" aria-label="開いているエディター"></div><div class="sh" id="wn">フォルダー</div><div id="tree" role="tree" aria-label="フォルダツリー"></div></div>
+ <div id="vs" class="sdb" hidden><div id="sq" role="search"><input id="gq" type="text" aria-label="フォルダー内を検索" placeholder="検索（Enterで実行）" autocomplete="off" autocapitalize="off" spellcheck="false"><button id="gb" aria-label="検索を実行">→</button></div><div id="gr" aria-live="polite"></div></div></aside>
+<div id="main">
 <div id="tb" role="toolbar" aria-label="ツールバー"></div>
 <div id="tabs" role="tablist" aria-label="開いているファイル"></div>
+<nav id="bc" aria-label="パンくずリスト"></nav>
 <div id="fb" role="search">
  <input type="text" id="fq" aria-label="検索語" placeholder="検索" autocomplete="off" autocapitalize="off" spellcheck="false">
  <input type="text" id="fr" aria-label="置換後の文字列" placeholder="置換" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -87,10 +130,13 @@ button,input{font:inherit;color:inherit}
 </div>
 <div id="ed"><div id="view" aria-label="エディタ表示"><div id="lines"><div id="bg"></div><div id="rows"></div><div id="cu"></div>
  <textarea id="ta" aria-label="コードエディタ（入力）" aria-multiline="true" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea></div></div></div>
-<div id="sb"><span id="s1"></span><span id="s2"></span><button id="s3" aria-label="言語を変更"></button><button id="s4" aria-label="改行コードを切り替え"></button><span id="s5">UTF-8</span><button id="s6" aria-label="インデント設定を切り替え"></button></div>
+<section id="pn" aria-label="問題パネル" hidden><div id="pnh"><b>問題</b><span id="pnc"></span><button id="pnx" aria-label="問題パネルを閉じる">✕</button></div><div id="pnl"></div></section>
+</div></div>
+<div id="scrim" hidden></div>
+<div id="sb" role="group" aria-label="ステータスバー"><button id="s7" aria-label="問題パネルを切り替え"></button><i class="sp"></i><button id="s1" aria-label="行へ移動"></button><button id="s2" class="lo" aria-label="すべて選択"></button><button id="s6" aria-label="インデント設定を切り替え"></button><button id="s5" class="lo" aria-label="BOMの有無を切り替え">UTF-8</button><button id="s4" class="lo" aria-label="改行コードを切り替え"></button><button id="s3" aria-label="言語を変更"></button></div>
 <div id="pl" hidden><div id="pb"><input id="pi" aria-label="コマンドパレット入力" autocomplete="off" autocapitalize="off" spellcheck="false"><div id="pr" role="listbox"></div></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<input type="file" id="fi" multiple hidden>
+<input type="file" id="fi" multiple hidden><input type="file" id="fd" multiple hidden>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id),root=document.documentElement,view=$('view'),lines=$('lines'),rows=$('rows'),bgL=$('bg'),cuL=$('cu'),ta=$('ta');
@@ -128,7 +174,7 @@ cl('csharp','C#',['cs'],'abstract as base bool break byte case catch char class 
 defLang('shell',{name:'Shell',ext:['sh','bash','zsh','bashrc','zshrc'],comment:'#',indent:/(?:\bthen|\bdo|\{)\s*$/,rules:[
  {t:'c',re:'(?:^|\\s)#.*'},{t:'s',re:X.dq+'|'+X.sq},{t:'v',re:'\\$(?:\\w+|\\{[^}]*\\}|[@#?$!*])'},{t:'n',re:X.num},
  {t:'k',w:'if then else elif fi for while until do done case esac in function select return exit break continue local export readonly declare unset source alias echo cd set shift trap eval exec test'}]});
-const byExt={};Object.values(LANGS).forEach(L=>L.ext.forEach(e=>byExt[e]=L.id));
+const byExt={};
 function compile(L){if(L._re!==undefined)return;const p=[];L._t=[];L._ml=[];
  for(const r of L.rules){p.push('('+(r.w?'\\b(?:'+r.w.split(' ').join('|')+')\\b':r.re)+')');L._t.push(r.t);L._ml.push(r.ml?new RegExp(r.ml):null)}
  try{L._re=p.length?new RegExp(p.join('|'),'g'):null}catch(e){L._re=null}L._hm=L._ml.some(Boolean)}
@@ -145,20 +191,20 @@ function tok(L,s,st,cb){let i=0;compile(L);
 
 /* ===== テーマ ===== */
 const THEMES={
- dark:{name:'Dark+',v:{bg:'#1e1e1e',fg:'#d4d4d4',gut:'#858585',guta:'#c6c6c6',cl:'#282828',sel:'#264f78',fm:'#613214',fmc:'#515c6a',bm:'#0064001a',tab:'#252526',tabi:'#2d2d2d',tabfg:'#969696',bd:'#3c3c3c',tb:'#333333',sbbg:'#007acc',sbfg:'#ffffff',guide:'#404040',ws:'#5a5a5a',cur:'#aeafad',pbg:'#252526',pon:'#04395e',
+ dark:{name:'Dark Modern',v:{bg:'#1f1f1f',fg:'#cccccc',gut:'#6e7681',guta:'#cccccc',cl:'#ffffff0a',sel:'#264f78',fm:'#613214',fmc:'#515c6a',bm:'#0064001a',tab:'#181818',tabi:'#181818',tabfg:'#9d9d9d',bd:'#2b2b2b',tb:'#181818',sbbg:'#181818',sbfg:'#cccccc',guide:'#404040',ws:'#5a5a5a',cur:'#aeafad',pbg:'#202020',pon:'#04395e',acc:'#0078d4',ab:'#181818',abfg:'#9d9d9d',abon:'#ffffff',sd:'#181818',hov:'#ffffff14',inp:'#313131',err:'#f14c4c',warn:'#cca700',
   k:'#569cd6',s:'#ce9178',n:'#b5cea8',c:'#6a9955',f:'#dcdcaa',y:'#4ec9b0',v:'#9cdcfe',p:'#4fc1ff',t:'#569cd6',a:'#9cdcfe',h:'#569cd6'}},
- light:{name:'Light+',v:{bg:'#ffffff',fg:'#000000',gut:'#237893',guta:'#0b216f',cl:'#f3f3f3',sel:'#add6ff',fm:'#ea5c0055',fmc:'#a8ac94',bm:'#b9b9b94d',tab:'#f3f3f3',tabi:'#ececec',tabfg:'#6f6f6f',bd:'#d4d4d4',tb:'#2c2c2c',sbbg:'#007acc',sbfg:'#ffffff',guide:'#d3d3d3',ws:'#c0c0c0',cur:'#000000',pbg:'#f3f3f3',pon:'#d6ebff',
+ light:{name:'Light Modern',v:{bg:'#ffffff',fg:'#3b3b3b',gut:'#6e7681',guta:'#171184',cl:'#0000000a',sel:'#add6ff',fm:'#ea5c0055',fmc:'#a8ac94',bm:'#b9b9b94d',tab:'#f8f8f8',tabi:'#f8f8f8',tabfg:'#6f6f6f',bd:'#e5e5e5',tb:'#f8f8f8',sbbg:'#f8f8f8',sbfg:'#3b3b3b',guide:'#d3d3d3',ws:'#c0c0c0',cur:'#000000',pbg:'#f8f8f8',pon:'#d6ebff',acc:'#005fb8',ab:'#f8f8f8',abfg:'#616161',abon:'#1f1f1f',sd:'#f8f8f8',hov:'#0000000f',inp:'#ffffff',err:'#e51400',warn:'#bf8803',
   k:'#0000ff',s:'#a31515',n:'#098658',c:'#008000',f:'#795e26',y:'#267f99',v:'#001080',p:'#0070c1',t:'#800000',a:'#e50000',h:'#800000'}}};
 const mq=matchMedia('(prefers-color-scheme: dark)');
 
 /* ===== 状態 ===== */
-const S={theme:'auto',fs:15,ws:false,guides:true,indent:'4'};
+const S={theme:'auto',fs:15,ws:false,guides:true,indent:'4',ts:4};
 let docs=[],D=null,VER=0,untitled=0,LH=23,CW=9,GW=60,vis=null,vc=1,raf=0,rv=false,RF=0,composing=false,cv='',free=false;
 const hc=new Map(),fc=new Map(),F={m:[],by:new Map(),cur:null},SENT='\u200b';
 const cmp=(p,q)=>p.l-q.l||p.c-q.c,S0=s=>cmp(s.a,s.h)<=0?s.a:s.h,E0=s=>cmp(s.a,s.h)<=0?s.h:s.a;
 const esc=s=>s.replace(/[&<>]/g,c=>c==='&'?'&amp;':c==='<'?'&lt;':'&gt;');
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2400)};
-const unit=()=>S.indent==='tab'?'\t':' '.repeat(+S.indent),uw=()=>S.indent==='tab'?4:+S.indent;
+const unit=()=>S.indent==='tab'?'\t':' '.repeat(+S.indent),uw=()=>S.indent==='tab'?S.ts:+S.indent;
 const lenL=l=>D.lines[l].length,wd=s=>s.length+(s.match(/[^\x00-\u2fff]/g)||[]).length;
 function mkDoc(name,text,handle,bom){const t=text.replace(/\r\n?/g,'\n'),c=(text.match(/\r\n/g)||[]).length,l=(text.match(/\n/g)||[]).length;
  const d={name,handle:handle||null,bom:!!bom,eol:c>0&&c>l-c?'CRLF':'LF',lines:t.split('\n'),sels:[{a:{l:0,c:0},h:{l:0,c:0},p:1}],folds:new Map(),lang:'plain',st:[],vt:0,ver:++VER,H:[],hi:-1,ht:0,lk:'',sy:0,sx:0,maxW:0};
@@ -172,7 +218,7 @@ function record(kind){if(composing)return;const H=D.H,now=Date.now(),top=H[D.hi]
 function restore(x){D.lines=x.lines.slice();D.sels=x.sels.map(s=>({a:{...s.a},h:{...s.h},p:s.p}));D.folds=new Map(x.folds);D.ver=x.ver;D.vt=0;fc.clear();revis();size();recalc();rv=true;changed()}
 const undo=()=>{record('op');if(D.hi>0){D.hi--;restore(D.H[D.hi])}},redo=()=>{if(D.hi<D.H.length-1){D.hi++;restore(D.H[D.hi])}};
 const dirty=d=>d.ver!==d.sv;
-function changed(){tabsR();document.title=(dirty(D)?'● ':'')+D.name+' - コードエディタ';if($('fb').classList.contains('on')){findAll();fcount()}sched()}
+function changed(){tabsR();document.title=(dirty(D)?'● ':'')+D.name+' - コードエディタ';if($('fb').classList.contains('on')){findAll();fcount()}dgs();sched()}
 
 /* ===== 折りたたみ・可視行 ===== */
 function revis(){const f=D.folds,n=D.lines.length;if(!f.size){vis=null;vc=n;return}vis=[];for(let l=0;l<n;l++){vis.push(l);const e=f.get(l);if(e!==undefined&&e>l)l=e}vc=vis.length}
@@ -325,7 +371,7 @@ function draw(){raf=0;if(!D)return;const vh=view.clientHeight,vw=view.clientWidt
  rv=false;if(moved)sched();status()}
 function status(){const p=prim();let n=0;for(const s of D.sels){const a=S0(s),b=E0(s);if(a.l===b.l)n+=b.c-a.c;else{n+=lenL(a.l)-a.c+b.c+1;for(let l=a.l+1;l<b.l&&l<a.l+100000;l++)n+=lenL(l)+1}}
  $('s1').textContent='行 '+(p.h.l+1)+'、列 '+(p.h.c+1);$('s2').textContent=(n?n+' 文字を選択':'')+(D.sels.length>1?(n?'、':'')+D.sels.length+' 個のカーソル':'');
- $('s3').textContent=LANGS[D.lang].name;$('s4').textContent=D.eol;$('s5').textContent=D.bom?'UTF-8 (BOM付き)':'UTF-8';$('s6').textContent=S.indent==='tab'?'タブ':'スペース: '+S.indent}
+ $('s3').textContent=LANGS[D.lang].name;$('s4').textContent=D.eol;$('s5').textContent=D.bom?'UTF-8 (BOM付き)':'UTF-8';$('s6').textContent=S.indent==='tab'?'タブ幅: '+uw():'スペース: '+S.indent}
 function pointPos(x,y){const r=view.getBoundingClientRect();let v=Math.floor((y-r.top+view.scrollTop)/LH);v=Math.max(0,Math.min(vc-1,v));const l=la(v),row=rows.children[v-RF];if(!row)return{l,c:0};
  const xc=row.children[1],xr=xc.getBoundingClientRect(),s0=+xc.dataset.s||0,yy=row.getBoundingClientRect().top+LH/2;let n,o;
  if(document.caretPositionFromPoint){const q=document.caretPositionFromPoint(x,yy);if(q){n=q.offsetNode;o=q.offset}}else if(document.caretRangeFromPoint){const q=document.caretRangeFromPoint(x,yy);if(q){n=q.startContainer;o=q.startOffset}}
@@ -383,29 +429,35 @@ $('fb').addEventListener('keydown',e=>{if(e.isComposing||e.keyCode===229)return;
 $('fp').onclick=()=>go(-1);$('fnx').onclick=()=>go(1);$('fo').onclick=replOne;$('fa').onclick=replAll;$('fx').onclick=closeFind;
 
 /* ===== ファイル・タブ ===== */
-function tabsR(){const T=$('tabs');T.innerHTML=docs.map((d,i)=>'<div class="tw'+(d===D?' on':'')+'" data-i="'+i+'"><button class="n1" role="tab" aria-selected="'+(d===D)+'" aria-label="'+esc(d.name)+(dirty(d)?'（未保存）':'')+'">'+(dirty(d)?'● ':'')+esc(d.name)+'</button><button class="x1" aria-label="'+esc(d.name)+'を閉じる">×</button></div>').join('');
+function tabsR(){const T=$('tabs');T.innerHTML=docs.map((d,i)=>'<div class="tw'+(d===D?' on':'')+'" data-i="'+i+'"><button class="n1" role="tab" aria-selected="'+(d===D)+'" aria-label="'+esc(d.name)+(dirty(d)?'（未保存）':'')+'">'+esc(d.name)+'</button><button class="x1" aria-label="'+esc(d.name)+'を閉じる">'+(dirty(d)?'●':'×')+'</button></div>').join('');bcR();if(sv)oeR();
  const on=T.querySelector('.on');if(on&&on.scrollIntoView)on.scrollIntoView({block:'nearest',inline:'nearest'})}
 $('tabs').addEventListener('click',e=>{const w=e.target.closest('.tw');if(!w)return;const i=+w.dataset.i;if(e.target.closest('.x1'))closeTab(i);else activate(i)});
 $('tabs').addEventListener('mousedown',e=>{if(e.button===1){e.preventDefault()}});
 $('tabs').addEventListener('auxclick',e=>{if(e.button===1){const w=e.target.closest('.tw');if(w)closeTab(+w.dataset.i)}});
-function activate(i){if(D){D.sy=view.scrollTop;D.sx=view.scrollLeft}D=docs[i];F.cur=null;fc.clear();revis();recalc();size();view.scrollTop=D.sy;view.scrollLeft=D.sx;changed();rv=true;ta.focus({preventScroll:true})}
+function activate(i){if(D){D.sy=view.scrollTop;D.sx=view.scrollLeft}D=docs[i];F.cur=null;fc.clear();revis();recalc();size();view.scrollTop=D.sy;view.scrollLeft=D.sx;changed();rv=true;if(sv)treeR();pnR();ta.focus({preventScroll:true})}
 const di=()=>docs.indexOf(D);
 function addDoc(d){docs.push(d);d.H=[snap0(d)];d.hi=0;activate(docs.length-1)}
 function snap0(d){const x=D;D=d;const s=snap();D=x;return s}
 function newDoc(){addDoc(mkDoc('無題-'+(++untitled)+'.txt','',null,false))}
 function closeTab(i){const d=docs[i];if(dirty(d)&&!confirm(d.name+' には未保存の変更があります。破棄して閉じますか？'))return;docs.splice(i,1);if(!docs.length)newDoc();else{if(D===d)activate(Math.min(i,docs.length-1));else tabsR()}}
 const cycle=n=>activate((di()+n+docs.length)%docs.length);
-async function readFile(f,h){const buf=await f.arrayBuffer(),u=new Uint8Array(buf),bom=u[0]===0xEF&&u[1]===0xBB&&u[2]===0xBF;let t;
+const IMG=/\.(png|jpe?g|gif|webp|bmp|ico|icns|tiff?|avif|heic|pdf|zip|gz|tar|7z|rar|exe|dll|so|dylib|bin|woff2?|ttf|otf|eot|mp[34]|mov|avi|wav|ogg|webm|class|jar|wasm|o|a|psd|sqlite)$/i;
+async function readFile(f,h,path){
+ if(IMG.test(f.name))return toast('「'+f.name+'」はテキストではありません');
+ if(f.size>5242880&&!confirm(f.name+' は '+(f.size/1048576).toFixed(1)+'MB あります。5MBを超えるファイルを開くと動作が重くなる場合があります。開きますか？'))return;
+ const buf=await f.arrayBuffer(),u=new Uint8Array(buf);
+ if(u.subarray(0,8192).includes(0))return toast('「'+f.name+'」はテキストではありません');
+ const bom=u[0]===0xEF&&u[1]===0xBB&&u[2]===0xBF;let t;
  try{t=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch(e){t=new TextDecoder('utf-8').decode(buf);toast('UTF-8でない文字は置換して読み込みました')}
- const d=mkDoc(f.name,t,h,bom);if(docs.length===1&&!D.handle&&D.lines.length===1&&!D.lines[0]&&!dirty(D)&&/^無題/.test(D.name))docs.length=0;addDoc(d)}
+ const d=mkDoc(f.name,t,h,bom);d.path=path||f.name;if(docs.length===1&&!D.handle&&D.lines.length===1&&!D.lines[0]&&!dirty(D)&&/^無題/.test(D.name))docs.length=0;addDoc(d)}
 async function openFile(){if(window.showOpenFilePicker){try{const hs=await window.showOpenFilePicker({multiple:true});for(const h of hs)await readFile(await h.getFile(),h);return}catch(e){if(e.name==='AbortError')return}}$('fi').click()}
 $('fi').onchange=async e=>{const fs=[...e.target.files];e.target.value='';for(const f of fs)await readFile(f,null)};
 const payload=t=>(D.bom?'\uFEFF':'')+(D.eol==='CRLF'?t.replace(/\n/g,'\r\n'):t);
 async function write(h){const d=D,t=d.lines.join('\n'),w=await h.createWritable();await w.write(new Blob([payload(t)],{type:'text/plain;charset=utf-8'}));await w.close();d.sv=d.ver;changed();toast('保存しました')}
 function download(){const t=D.lines.join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([payload(t)],{type:'text/plain;charset=utf-8'}));a.download=D.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);D.sv=D.ver;changed();toast('ダウンロードしました')}
-async function save(){if(D.handle){try{await write(D.handle)}catch(e){toast('保存に失敗しました: '+e.message)}}else if(window.showSaveFilePicker)return saveAs();else download()}
-async function saveAs(){if(window.showSaveFilePicker){try{const h=await window.showSaveFilePicker({suggestedName:D.name});D.handle=h;D.name=h.name;await write(h);const m=/\.([^.]+)$/.exec(D.name);if(m&&byExt[m[1].toLowerCase()])D.lang=byExt[m[1].toLowerCase()];return}catch(e){if(e.name==='AbortError')return;toast('保存に失敗しました: '+e.message);return}}
- let n=null;try{n=prompt('ファイル名を入力してください',D.name)}catch(e){n=D.name}if(!n)return;D.name=n;download()}
+async function save(){if(D.isSet){dgNow();toast('設定を反映しました');return}if(D.handle){try{await write(D.handle)}catch(e){toast('保存に失敗しました: '+e.message)}}else if(window.showSaveFilePicker)return saveAs();else download()}
+async function saveAs(){if(window.showSaveFilePicker){try{const h=await window.showSaveFilePicker({suggestedName:D.name});D.handle=h;D.name=D.path=h.name;await write(h);const m=/\.([^.]+)$/.exec(D.name);if(m&&byExt[m[1].toLowerCase()])D.lang=byExt[m[1].toLowerCase()];return}catch(e){if(e.name==='AbortError')return;toast('保存に失敗しました: '+e.message);return}}
+ let n=null;try{n=prompt('ファイル名を入力してください',D.name)}catch(e){n=D.name}if(!n)return;D.name=D.path=n;download()}
 addEventListener('beforeunload',e=>{if(docs.some(dirty)){e.preventDefault();e.returnValue=''}});
 
 /* ===== コマンド・パレット ===== */
@@ -436,14 +488,118 @@ C('copy','編集: コピー','copy','',()=>clip(0));C('cut','編集: 切り取�
 C('ws','表示: 空白文字の表示を切り替え','toggle whitespace','',()=>{S.ws=!S.ws;hc.clear();sched();tbR()});
 C('guides','表示: インデントガイドを切り替え','toggle indent guides','',()=>{S.guides=!S.guides;ed.classList.toggle('noguide',!S.guides)});
 C('fsp','表示: 文字を大きく','zoom in','',()=>setFs(1));C('fsm','表示: 文字を小さく','zoom out','',()=>setFs(-1));
-C('thm','表示: テーマを順に切り替え','toggle theme','',()=>{S.theme={auto:'dark',dark:'light',light:'auto'}[S.theme];theme()});
+C('thm','表示: テーマを順に切り替え','toggle theme','',()=>{S.theme={auto:'dark',dark:'light',light:'auto'}[S.theme]||'auto';theme()});
 C('th-auto','テーマ: OSの設定に従う','theme auto','',()=>{S.theme='auto';theme()});
-for(const k in THEMES)C('th-'+k,'テーマ: '+THEMES[k].name,'theme '+k,'',()=>{S.theme=k;theme()});
-['2','4','tab'].forEach(v=>C('in-'+v,'インデント: '+(v==='tab'?'タブ':'スペース '+v),'indent '+v,'',()=>{S.indent=v;root.style.setProperty('--tab',uw());root.style.setProperty('--iw',uw());hc.clear();sched();status()}));
+syncThemes();
+['2','4','tab'].forEach(v=>C('in-'+v,'インデント: '+(v==='tab'?'タブ':'スペース '+v),'indent '+v,'',()=>setIndent(v)));
 ['LF','CRLF'].forEach(v=>C('eol-'+v,'改行コード: '+v,'eol '+v,'',()=>{D.eol=v;status();toast('保存時の改行コード: '+v)}));
-Object.values(LANGS).forEach(L=>C('lg-'+L.id,'言語を変更: '+L.name,'language '+L.id,'',()=>{D.lang=L.id;D.vt=0;sched();status()}));
+syncLangs();
+/* ===== レイアウト: アクティビティバー / サイドバー / 問題パネル ===== */
+const DESK=matchMedia('(min-width:1024px) and (hover:hover)'),sd=$('sd'),pn=$('pn'),MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,"Noto Sans Mono CJK JP","BIZ UDGothic","Osaka-Mono","MS Gothic",monospace';
+let sv=false,sw='x',WS=null,TV=[],GR=[],gT=0,dgT=0;
+const SKIP=/^(\.git|node_modules|\.DS_Store)$/;
+function abR(){$('a1').setAttribute('aria-pressed',sv&&sw==='x');$('a2').setAttribute('aria-pressed',sv&&sw==='s');$('a3').setAttribute('aria-pressed',!pn.hidden)}
+function setSide(on,v){if(v){sw=v;$('vx').hidden=v!=='x';$('vs').hidden=v!=='s';$('sdt').textContent=v==='x'?'エクスプローラー':'検索'}sv=on;sd.classList.toggle('sv',on);$('scrim').hidden=DESK.matches||!on;abR();if(on&&sw==='x')treeR();if(D){size();sched()}}
+function pnT(on){pn.hidden=on===undefined?!pn.hidden:!on;abR();pnR();if(D){size();sched()}}
+DESK.addEventListener&&DESK.addEventListener('change',()=>setSide(DESK.matches?CFG.sidebarVisible:false));
+$('scrim').onclick=()=>setSide(false);$('pnx').onclick=()=>pnT(false);
+$('ab').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;if(v){setSide(!(sv&&sw===v),v);if(v==='s'&&sv)$('gq').focus()}else CM[b.dataset.c].f()});
+
+/* ===== ワークスペース（実フォルダ / input fileフォールバック。機能検出のみ） ===== */
+const srt=a=>a.sort((x,y)=>y.d-x.d||x.n.localeCompare(y.n)),mkN=(n,p,d,h,f)=>({n,p,d,h,f,k:null,o:false});
+async function kids(n){if(n.k)return n.k;const a=[];try{for await(const [nm,h] of n.h.entries())a.push(mkN(nm,n.p?n.p+'/'+nm:nm,h.kind==='directory',h))}catch(e){toast('読み込めません: '+n.n)}return n.k=srt(a)}
+async function walk(n,cb){for(const k of await kids(n)){if(SKIP.test(k.n))continue;if(k.d)await walk(k,cb);else await cb(k)}}
+const gf=async n=>n.f||await n.h.getFile();
+async function idx(){const a=[];await walk(WS.r,async n=>{if(a.length<5000&&!IMG.test(n.n))a.push(n)});WS.all=a}
+const wsq=()=>(WS&&WS.all||[]).filter(n=>!docs.some(d=>d.path===n.p)).map(n=>({t:n.p,s:n.p,k:'',f:()=>openNode(n)}));
+if('webkitdirectory' in $('fd'))$('fd').webkitdirectory=true;
+async function openFolder(){if(window.showDirectoryPicker){try{const h=await window.showDirectoryPicker({mode:'readwrite'}),r=mkN(h.name,'',true,h);r.o=true;await kids(r);WS={n:h.name,r,all:null};setSide(true,'x')}catch(e){if(e.name!=='AbortError')toast('フォルダーを開けませんでした: '+e.message)}return}$('fd').click()}
+$('fd').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;const rp=f=>f.webkitRelativePath||f.name,top=rp(fs[0]).includes('/')?rp(fs[0]).split('/')[0]:'ファイル',r=mkN(top,'',true,null);r.o=true;r.k=[];
+ for(const f of fs){const sg=rp(f).split('/');if(sg.length>1)sg.shift();let c=r;for(let i=0;i<sg.length;i++){const last=i===sg.length-1;let x=last?null:c.k.find(q=>q.d&&q.n===sg[i]);if(!x){x=mkN(sg[i],sg.slice(0,i+1).join('/'),!last,null,last?f:null);if(!last)x.k=[];c.k.push(x)}c=x}}
+ (function w(n){if(n.k){srt(n.k);n.k.forEach(w)}})(r);WS={n:top,r,all:null};setSide(true,'x')};
+async function openNode(n,line,col){if(n.d)return;const i=docs.findIndex(d=>d.path===n.p);if(i>=0)activate(i);else{try{await readFile(await gf(n),n.h,n.p)}catch(e){return toast('開けません: '+e.message)}}
+ if(line!==undefined&&D.path===n.p)goPos(line,col||0);if(!DESK.matches)setSide(false)}
+function goPos(l,c){l=Math.min(l,D.lines.length-1);setSels([{a:{l,c},h:{l,c},p:1}]);ta.focus({preventScroll:true})}
+function treeR(){TV=[];if(WS)(function w(n,dp){for(const k of n.k||[]){TV.push([k,dp]);if(k.d&&k.o)w(k,dp+1)}})(WS.r,0);
+ $('tree').innerHTML=WS?TV.map(([n,dp],i)=>'<button class="ti'+(!n.d&&D&&D.path===n.p?' on':'')+'" role="treeitem" data-n="'+i+'" aria-level="'+(dp+1)+'"'+(n.d?' aria-expanded="'+n.o+'"':'')+' style="padding-left:'+(8+dp*12)+'px"><i>'+(n.d?(n.o?'▾':'▸'):'')+'</i>'+esc(n.n)+'</button>').join(''):'<p class="em">フォルダーを開いていません。</p><button class="bt" data-c="openfolder">フォルダーを開く</button><button class="bt" data-c="open">ファイルを開く</button>';
+ $('wn').textContent=WS?WS.n:'フォルダー';oeR()}
+function oeR(){$('oe').innerHTML=docs.map((d,i)=>'<button class="ti'+(d===D?' on':'')+'" role="option" aria-selected="'+(d===D)+'" data-d="'+i+'">'+(dirty(d)?'● ':'')+esc(d.name)+'</button>').join('')}
+function bcR(){$('bc').innerHTML=(D.path||D.name).split('/').map(x=>'<span>'+esc(x)+'</span>').join('<span aria-hidden="true">›</span>')}
+sd.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const q=b.dataset;
+ if(q.d!==undefined){activate(+q.d);if(!DESK.matches)setSide(false)}
+ else if(q.n!==undefined){const n=TV[+q.n][0];if(n.d){n.o=!n.o;if(n.o)await kids(n);treeR();const t=$('tree').children[+q.n];t&&t.focus()}else openNode(n)}
+ else if(q.c)CM[q.c].f();
+ else if(q.g!==undefined){const r=GR[+q.g];if(r.i>=0){activate(r.i);goPos(r.l,r.c);if(!DESK.matches)setSide(false)}else openNode(r.n,r.l,r.c)}
+ else if(b.id==='sdx')setSide(false);else if(b.id==='gb')gsearch()});
+sd.addEventListener('keydown',e=>{if(e.key==='Escape'&&!DESK.matches){setSide(false);ta.focus({preventScroll:true});return}
+ const t=e.target;if(t.classList&&t.classList.contains('ti')&&/^Arrow(Up|Down|Left|Right)$/.test(e.key)){const l=[...sd.querySelectorAll('.sdb:not([hidden]) .ti')],i=l.indexOf(t);e.preventDefault();
+  if(e.key==='ArrowDown'){l[i+1]&&l[i+1].focus()}else if(e.key==='ArrowUp'){l[i-1]&&l[i-1].focus()}else if(t.hasAttribute('aria-expanded')&&(t.getAttribute('aria-expanded')==='true')===(e.key==='ArrowLeft'))t.click()}
+ if(e.target.id==='gq'&&e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();gsearch()}});
+async function gsearch(){const q=$('gq').value,out=$('gr'),my=++gT;GR=[];if(!q){out.innerHTML='';return}out.innerHTML='<p class="em">検索中…</p>';const lq=q.toLowerCase(),seen=new Set();
+ const scan=(p,L,i,n)=>{for(let l=0;l<L.length&&GR.length<500;l++){const c=L[l].toLowerCase().indexOf(lq);if(c>=0)GR.push({p,l,c,t:L[l].trim().slice(0,200),i,n})}};
+ docs.forEach((d,i)=>{seen.add(d.path||d.name);scan(d.path||d.name,d.lines,i)});
+ if(WS)await walk(WS.r,async n=>{if(my!==gT||GR.length>=500||seen.has(n.p)||IMG.test(n.n))return;try{const f=await gf(n);if(f.size>1e6)return;const t=await f.text();if(t.includes('\0'))return;scan(n.p,t.split(/\r?\n/),-1,n)}catch(e){}});
+ if(my===gT)out.innerHTML=GR.length?GR.map((r,i)=>(i&&GR[i-1].p===r.p?'':'<div class="sh">'+esc(r.p)+'</div>')+'<button class="ti" data-g="'+i+'"><small>'+(r.l+1)+'</small> '+esc(r.t)+'</button>').join(''):'<p class="em">結果がありません</p>'}
+
+/* ===== 問題パネル（括弧の対応・JSON構文・設定値の検査） ===== */
+const BR={'(':')','[':']','{':'}'};
+function diag(d){const o=[],add=(l,c,m,s)=>{if(o.length<100)o.push({l,c,m,s})},L=LANGS[d.lang];
+ if(d.lang==='json'){const t=d.lines.join('\n');if(!t.trim())return o;let j;try{j=JSON.parse(t)}catch(e){const m=e.message,a=/line (\d+) column (\d+)/.exec(m),b=/position (\d+)/.exec(m);let l=d.lines.length-1,c=d.lines[l].length;
+   if(a){l=a[1]-1;c=a[2]-1}else if(b){let p=+b[1];l=0;while(l<d.lines.length-1&&p>d.lines[l].length){p-=d.lines[l].length+1;l++}c=p}add(l,c,'JSONの構文エラー: '+m,1);return o}
+  if(d.isSet){if(!j||typeof j!=='object'||Array.isArray(j)){add(0,0,'設定は { } のオブジェクトで記述してください',1);return o}d._j=j;
+   const at=k=>Math.max(0,d.lines.findIndex(x=>x.includes('"'+k+'"')));
+   for(const k in j){if(!Object.hasOwn(SCH,k))add(at(k),0,'不明な設定です: '+k,2);else if(!SCH[k](j[k]))add(at(k),0,k+' の値が不正です（直前の値を保持します）',2)}
+   if(j.wordWrap==='on')add(at('wordWrap'),0,'wordWrap "on" は未対応です（折り返さず表示します）',2)}
+  return o}
+ if(!L.rules.length||['markdown','html','shell'].includes(d.lang)||d.lines.length>20000)return o;
+ const st=[];
+ for(let l=0;l<d.lines.length;l++){let x=0;tok(L,d.lines[l],stIn(l),(t,s)=>{if(t!=='s'&&t!=='c')for(let i=0;i<s.length;i++){const ch=s[i];if(BR[ch])st.push({ch,l,c:x+i});else if(')]}'.includes(ch)){const q=st.pop();if(!q)add(l,x+i,"対応する開き括弧がありません: '"+ch+"'",2);else if(BR[q.ch]!==ch)add(l,x+i,"'"+q.ch+"' に対して '"+ch+"' は対応しません",2)}}x+=s.length})}
+ for(const q of st)add(q.l,q.c,"括弧 '"+q.ch+"' が閉じられていません",2);return o}
+function dgs(){clearTimeout(dgT);dgT=setTimeout(dgNow,D&&D.lines.length>5000?900:350)}
+function dgNow(){clearTimeout(dgT);if(!D)return;const d=D;d.pr=diag(d);
+ if(d.isSet&&d._j&&!d.pr.some(p=>p.s===1)){const j=d._j,c={};for(const k in CFG0)c[k]=k in j?(SCH[k](j[k])?j[k]:CFG[k]):CFG0[k];applyCfg(c);d.sv=d.ver;tabsR()}pnR()}
+function pnR(){let e=0,w=0,h='';docs.forEach((d,i)=>(d.pr||[]).forEach((p,j)=>{p.s===1?e++:w++;if(h.length<80000)h+='<button class="pr" data-i="'+i+'" data-j="'+j+'"><b class="'+(p.s===1?'er':'wr')+'">'+(p.s===1?'✖':'⚠')+'</b> '+esc(p.m)+' <small>'+esc(d.name)+' ['+(p.l+1)+', '+(p.c+1)+']</small></button>'}));
+ $('s7').textContent='✖ '+e+'  ⚠ '+w;$('pnc').textContent=e+w;if(!pn.hidden)$('pnl').innerHTML=h||'<p class="em">問題は検出されていません。</p>'}
+$('pnl').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,p=docs[i].pr[+b.dataset.j];activate(i);goPos(p.l,p.c)});
+
+/* ===== 設定（JSON）: settings.json タブで編集。不正なJSONは直前の有効な設定を保持 ===== */
+const CFG0={fontSize:15,lineHeight:0,tabSize:4,insertSpaces:true,wordWrap:'off',theme:'auto',renderWhitespace:'none',indentGuides:true,minimap:false,sidebarVisible:true,fontFamily:''},KEY='code-editor-pro.settings',
+ num=(a,b)=>v=>typeof v==='number'&&v>=a&&v<=b,bool=v=>typeof v==='boolean',
+ SCH={fontSize:num(8,40),lineHeight:num(0,200),tabSize:v=>Number.isInteger(v)&&v>=1&&v<=8,insertSpaces:bool,wordWrap:v=>v==='off'||v==='on',theme:v=>v==='auto'||Object.hasOwn(THEMES,v),renderWhitespace:v=>['none','boundary','selection','trailing','all'].includes(v),indentGuides:bool,minimap:bool,sidebarVisible:bool,fontFamily:v=>typeof v==='string'&&v.length<300};
+let CFG={...CFG0};
+function lay(){const f=CFG.lineHeight;LH=f?Math.round(f<8?S.fs*f:f):Math.round(S.fs*1.55);root.style.setProperty('--fs',S.fs+'px');root.style.setProperty('--lh',LH+'px');measure();if(D){size();sched()}}
+function setIndent(v){S.indent=v;root.style.setProperty('--tab',uw());root.style.setProperty('--iw',uw());hc.clear();if(D){sched();status()}}
+function applyCfg(c){const pv=CFG.sidebarVisible;CFG=c;S.fs=c.fontSize;root.style.setProperty('--mono',(c.fontFamily?c.fontFamily+',':'')+MONO);S.theme=c.theme;theme();S.ws=c.renderWhitespace!=='none';S.guides=c.indentGuides;ed.classList.toggle('noguide',!S.guides);S.ts=c.tabSize;setIndent(c.insertSpaces?String(c.tabSize):'tab');tbR();lay();
+ if(DESK.matches&&c.sidebarVisible!==pv)setSide(c.sidebarVisible);try{localStorage.setItem(KEY,JSON.stringify(c))}catch(e){}}
+function loadCfg(){const c={...CFG0};try{const j=JSON.parse(localStorage.getItem(KEY)||'{}');for(const k in CFG0)if(k in j&&SCH[k](j[k]))c[k]=j[k]}catch(e){}applyCfg(c)}
+function openSettings(){const i=docs.findIndex(d=>d.isSet);if(i>=0)activate(i);else{const d=mkDoc('settings.json',JSON.stringify(CFG,null,2)+'\n',null,false);d.isSet=1;d.path='ユーザー/settings.json';addDoc(d)}if(!DESK.matches)setSide(false)}
+
+/* ===== 拡張用の登録API（将来、拡張JSONの内容をそのまま渡す。今回は読み込み処理なし）=====
+ regCommand({id,title,alias,key,run:[既存コマンドid...],when:'editor'|'always'}) → C() で登録。keyが既存と衝突する場合は無視
+ regTheme(id,{name,base:'dark'|'light',colors:{bg,fg,...}}) → THEMES に追加し「テーマ:」コマンドを生成
+ regLanguage(id,{name,ext,comment,indent:'正規表現文字列',rules:[...]}) → defLang() で登録し拡張子と「言語を変更:」を生成
+ （従来どおり C() / THEMES への直接追加 / defLang() も使える） */
+function syncThemes(){for(const k in THEMES)if(!CM['th-'+k])C('th-'+k,'テーマ: '+THEMES[k].name,'theme '+k,'',()=>{S.theme=k;theme()})}
+function syncLangs(){for(const L of Object.values(LANGS)){L.ext.forEach(e=>byExt[e]=L.id);if(!CM['lg-'+L.id])C('lg-'+L.id,'言語を変更: '+L.name,'language '+L.id,'',()=>{D.lang=L.id;D.vt=0;sched();status();dgs()})}}
+function regCommand(x){if(!x||!x.id||(CM[x.id]&&!CM[x.id].x))return false;const r=[].concat(x.run||[]),k=x.key&&!KMAP[x.key]?x.key:'';C(x.id,x.title||x.id,x.alias||'',k,()=>r.forEach(i=>CM[i]&&CM[i].f()),{x:1,[x.when==='editor'?'ed':'g']:1});return true}
+function regTheme(id,x){THEMES[id]={name:x.name||id,v:Object.assign({},THEMES[x.base==='light'?'light':'dark'].v,x.colors||{})};syncThemes();return true}
+function regLanguage(id,x){if(typeof x.indent==='string')try{x.indent=new RegExp(x.indent)}catch(e){delete x.indent}defLang(id,x);syncLangs();return true}
+
+/* ===== 追加コマンド・ショートカット ===== */
+C('sidebar','表示: サイドバーの表示を切り替え','toggle sidebar','Mod+B',()=>setSide(!sv),{g:1});
+C('explorer','表示: エクスプローラーにフォーカス','focus explorer','Mod+Shift+E',()=>{setSide(true,'x');(sd.querySelector('#tree .ti.on')||sd.querySelector('#tree .ti,#tree .bt')||sd.querySelector('#vx .ti')||$('sdx')).focus()},{g:1});
+C('gsearch','検索: フォルダー内を検索','search in folder','Mod+Shift+F',()=>{setSide(true,'s');$('gq').focus();$('gq').select()},{g:1});
+C('problems','表示: 問題パネルの表示を切り替え','toggle problems','Mod+Shift+M',()=>pnT(),{g:1});
+C('settings','設定: 設定を開く（JSON）','open settings','Mod+,',openSettings,{g:1});
+C('openfolder','ファイル: フォルダーを開く','open folder','',openFolder,{g:1});
+C('bom','ファイル: BOMの有無を切り替え','toggle bom','',()=>{D.bom=!D.bom;status()},{g:1});
+C('tbt','表示: ツールバーの表示を切り替え（PC）','toggle toolbar','',()=>document.body.classList.toggle('tbs'),{g:1});
+/* ブラウザ予約キー（Ctrl+W / Ctrl+Tab / Ctrl+PageUp,Down）の代替と別名 */
+const K=(k,id)=>{KMAP[k]=id};K('Mod+PageDown','next');K('Mod+PageUp','prev');K('Alt+PageDown','next');K('Alt+PageUp','prev');K('Alt+W','close');K('Alt+N','new');K('F1','palette');
+$('s1').onclick=()=>CM.goto.f();$('s2').onclick=()=>{CM.sela.f();ta.focus({preventScroll:true})};$('s5').onclick=()=>CM.bom.f();$('s7').onclick=()=>pnT();
+
 const ed=$('ed');
-const TB=[['new','＋'],['open','📂'],['save','💾'],0,['undo','↶'],['redo','↷'],0,['find','🔍'],['quick','📑'],['goto','↧'],['palette','≫'],0,['cmt','//'],['ind','⇥'],['outd','⇤'],['fold','▾'],['unfold','▸'],['cuu','⊕↑'],['cud','⊕↓'],0,['ws','␣'],['thm','◐'],['fsm','A−'],['fsp','A＋']];
+const TB=[['sidebar','☰'],['new','＋'],['open','📂'],['openfolder','🗂'],['save','💾'],0,['undo','↶'],['redo','↷'],0,['find','🔍'],['quick','📑'],['goto','↧'],['palette','≫'],['problems','⚠'],0,['cmt','//'],['ind','⇥'],['outd','⇤'],['fold','▾'],['unfold','▸'],['cuu','⊕↑'],['cud','⊕↓'],0,['ws','␣'],['thm','◐'],['fsm','A−'],['fsp','A＋']];
 function tbR(){$('tb').innerHTML=TB.map(b=>b?'<button data-c="'+b[0]+'" title="'+esc(CM[b[0]].t.replace(/^.*: /,''))+(CM[b[0]].k?'（'+CM[b[0]].k.replace('Mod','Ctrl/Cmd')+'）':'')+'" aria-label="'+esc(CM[b[0]].t.replace(/^.*: /,''))+'"'+(b[0]==='ws'?' aria-pressed="'+S.ws+'"':'')+'>'+b[1]+'</button>':'<i></i>').join('')}
 $('tb').addEventListener('click',e=>{const b=e.target.closest('button');if(b){CM[b.dataset.c].f();if(CM[b.dataset.c].ed)ta.focus({preventScroll:true})}});
 $('s3').onclick=()=>openPal('cmd','言語を変更');$('s4').onclick=()=>{D.eol=D.eol==='LF'?'CRLF':'LF';status()};$('s6').onclick=()=>CM['in-'+{2:'4',4:'tab',tab:'2'}[S.indent]].f();
@@ -455,12 +611,12 @@ const P={mode:'cmd',items:[],on:0},pi=$('pi'),pr=$('pr');
 function fz(q,s){q=q.toLowerCase();s=s.toLowerCase();let qi=0,sc=0,last=-2;for(let i=0;i<s.length&&qi<q.length;i++){if(s[i]===q[qi]){sc+=(i===last+1?5:1)+(i===0||' /:.-_'.includes(s[i-1])?3:0);last=i;qi++}}return qi===q.length?sc-s.length*.01:-1}
 function pBuild(){const q=pi.value;let src;
  if(P.mode==='cmd')src=Object.values(CM).map(c=>({t:c.t,s:c.t+' '+c.a,k:c.k?c.k.replace('Mod','Ctrl/Cmd'):'',f:c.f}));
- else if(P.mode==='file')src=docs.map((d,i)=>({t:(dirty(d)?'● ':'')+d.name,s:d.name,k:d===D?'表示中':'',f:()=>activate(i)}));
+ else if(P.mode==='file')src=docs.map((d,i)=>({t:(dirty(d)?'● ':'')+d.name,s:d.name,k:d===D?'表示中':'',f:()=>activate(i)})).concat(wsq());
  else src=[{t:'行番号を入力（1〜'+D.lines.length+'）して Enter',s:'',k:'',f:null}];
  let r=src.map(x=>({x,sc:q&&P.mode!=='goto'?fz(q,x.s||x.t):0})).filter(o=>o.sc>=0);if(q&&P.mode!=='goto')r.sort((a,b)=>b.sc-a.sc);
  P.items=r.slice(0,100).map(o=>o.x);P.on=0;pRender()}
 function pRender(){pr.innerHTML=P.items.map((x,i)=>'<div class="pi'+(i===P.on?' on':'')+'" role="option" data-i="'+i+'"><span>'+esc(x.t)+'</span><small>'+esc(x.k)+'</small></div>').join('');const o=pr.querySelector('.on');if(o)o.scrollIntoView({block:'nearest'})}
-function openPal(mode,pre){P.mode=mode;$('pl').hidden=false;pi.value=pre||'';pi.setAttribute('aria-label',{cmd:'コマンドパレット入力',file:'クイックオープン入力',goto:'行番号の入力'}[mode]);pi.inputMode=mode==='goto'?'numeric':'text';pBuild();pi.focus()}
+function openPal(mode,pre){P.mode=mode;$('pl').hidden=false;pi.value=pre||'';pi.setAttribute('aria-label',{cmd:'コマンドパレット入力',file:'クイックオープン入力',goto:'行番号の入力'}[mode]);pi.inputMode=mode==='goto'?'numeric':'text';pBuild();if(mode==='file'&&WS&&!WS.all)idx().then(pBuild);pi.focus()}
 function closePal(){$('pl').hidden=true;ta.focus({preventScroll:true})}
 function pRun(i){if(P.mode==='goto'){const n=parseInt(pi.value,10);if(!(n>=1&&n<=D.lines.length))return;closePal();setSels([{a:{l:n-1,c:0},h:{l:n-1,c:0},p:1}]);return}
  const x=P.items[i];if(!x||!x.f)return;closePal();x.f()}
@@ -474,15 +630,26 @@ $('pl').addEventListener('mousedown',e=>{if(e.target.id==='pl')closePal()});
 /* ===== 設定・初期化 ===== */
 function theme(){const n=S.theme==='auto'?(mq.matches?'dark':'light'):S.theme;for(const k in THEMES[n].v)root.style.setProperty('--'+k,THEMES[n].v[k]);root.style.colorScheme=n}
 function measure(){const c=document.createElement('canvas').getContext('2d');c.font=S.fs+'px '+getComputedStyle(ed).fontFamily;CW=c.measureText('M').width||S.fs*.6}
-function setFs(d){S.fs=Math.max(10,Math.min(32,S.fs+d));LH=Math.round(S.fs*1.55);root.style.setProperty('--fs',S.fs+'px');root.style.setProperty('--lh',LH+'px');measure();size();sched()}
+function setFs(d){S.fs=Math.max(8,Math.min(40,S.fs+d));CFG.fontSize=S.fs;lay()}
 mq.addEventListener&&mq.addEventListener('change',theme);
 const vv=window.visualViewport;
 function vvr(){root.style.setProperty('--vh',(vv?vv.height:innerHeight)+'px');scrollTo(0,0);if(D){size();sched()}}
 if(vv){vv.addEventListener('resize',()=>{vvr();if(document.activeElement===ta){rv=true}});vv.addEventListener('scroll',()=>scrollTo(0,0))}
 addEventListener('resize',vvr);
-theme();tbR();LH=Math.round(S.fs*1.55);root.style.setProperty('--lh',LH+'px');measure();
+theme();loadCfg();setSide(DESK.matches&&CFG.sidebarVisible,'x');
 newDoc();vvr();ta.focus({preventScroll:true});
 })();
 </script>
 </body>
 </html>
+<!--
+【拡張JSON仕様案（未実装。将来 regCommand / regTheme / regLanguage に渡す）】
+{ "name":"my-ext", "version":"1.0.0",
+  "commands":[{"id":"my.x","title":"カテゴリ: 名称","alias":"english alias","key":"Mod+Alt+U","when":"editor","run":["既存コマンドid","..."]}],
+  "themes":[{"id":"solar","name":"Solar","base":"dark","colors":{"bg":"#002b36","fg":"#93a1a1","k":"#859900"}}],
+  "languages":[{"id":"toml","name":"TOML","ext":["toml"],"comment":"#","indent":"[\\[{]\\s*$","rules":[{"t":"c","re":"#.*"},{"t":"s","re":"\"[^\"]*\""},{"t":"k","w":"true false"}]}] }
+・commands.run は既存コマンドidの配列のみ（任意コードは実行しない）。key が既存と衝突する場合は無視。
+・themes.colors は THEMES.*.v と同じキー。未指定のキーは base から継承。
+・languages は defLang と同じ形。indent だけは正規表現の文字列で書く。
+-->
+
